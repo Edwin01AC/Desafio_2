@@ -455,82 +455,213 @@ public:
     }
 };
 
+class Usuario {
+protected:
+    string nombre;
+    string tipo;
+    string ciudad;
+    string pais;
+    string fechaInscripcion;
+
+    Cancion** historialReproduccion;
+    int numHistorial;
+    int capacidadHistorial;
+
+    void redimensionarHistorial(int nuevaCapacidad) {
+        Cancion** nuevoHistorial = new Cancion*[nuevaCapacidad];
+
+        for (int i = 0; i < numHistorial; i++) {
+            nuevoHistorial[i] = historialReproduccion[i];
+        }
+
+        delete[] historialReproduccion;
+        historialReproduccion = nuevoHistorial;
+        capacidadHistorial = nuevaCapacidad;
+    }
+
+public:
+    Usuario(const string& nom, const string& tip, const string& ciu,
+            const string& pa, const string& fecha)
+        : nombre(nom), tipo(tip), ciudad(ciu), pais(pa), fechaInscripcion(fecha),
+        numHistorial(0), capacidadHistorial(10) {
+
+        historialReproduccion = new Cancion*[capacidadHistorial];
+    }
+
+    ~Usuario() {
+        delete[] historialReproduccion;
+    }
+
+    string getNickname() const { return nombre; }
+    string getTipo() const { return tipo; }
+    string getCiudad() const { return ciudad; }
+    string getPais() const { return pais; }
+    string getFechaInscripcion() const { return fechaInscripcion; }
+    int getNumHistorial() const { return numHistorial; }
+
+    void setCiudad(const string& ciu) { ciudad = ciu; }
+    void setPais(const string& pa) { pais = pa; }
+
+    void agregarAlHistorial(Cancion* cancion) {
+        if (numHistorial >= capacidadHistorial) {
+            redimensionarHistorial(capacidadHistorial * 2);
+        }
+
+        historialReproduccion[numHistorial] = cancion;
+        numHistorial++;
+    }
+
+    Cancion* getCancionHistorial(int indice) const {
+        if (indice >= 0 && indice < numHistorial) {
+            return historialReproduccion[indice];
+        }
+        return nullptr;
+    }
+
+    void mostrarInfo() const {
+        cout << "=== USUARIO ===" << endl;
+        cout << "Nombre: " << nombre << endl;
+        cout << "Tipo: " << tipo << endl;
+        cout << "Ciudad: " << ciudad << endl;
+        cout << "País: " << pais << endl;
+        cout << "Fecha de inscripción: " << fechaInscripcion << endl;
+        cout << "Canciones en historial: " << numHistorial << endl;
+    }
+
+    void mostrarHistorial() const {
+        cout << "Últimas canciones reproducidas:" << endl;
+        for (int i = 0; i < numHistorial; i++) {
+            cout << "  " << (i + 1) << ". " << historialReproduccion[i]->getNombre() << endl;
+        }
+    }
+
+    void reproducirCancionBase(Cancion* cancion, const string& rutaPortada, const string& artistaNombre) {
+        cout << "\n=== REPRODUCIENDO CANCIÓN ===" << endl;
+        cout << "Cantante: " << artistaNombre << endl;
+        cout << "Ruta a la portada del álbum: " << rutaPortada << endl;
+        cout << "Título: " << cancion->getNombre() << endl;
+        cout << "Duración: " << cancion->getDuracion() << " segundos" << endl;
+
+        cancion->incrementarReproducciones();
+
+        agregarAlHistorial(cancion);
+    }
+
+    void mostrarOpcionesBase() const {
+        cout << "\n=== OPCIONES DE REPRODUCCIÓN ===" << endl;
+        cout << "1.- Reproducir" << endl;
+        cout << "2.- Detener" << endl;
+    }
+
+    bool operator==(const Usuario& otro) const {
+        return this->nombre == otro.nombre;
+    }
+};
+
+class UsuarioEstandar {
+private:
+    Usuario usuarioBase;
+    int contadorCanciones;
+    int totalReproducciones;
+
+public:
+    UsuarioEstandar(const string& nick, const string& ciu,
+                    const string& pa, const string& fecha)
+        : usuarioBase(nick, "estandar", ciu, pa, fecha),
+        contadorCanciones(0), totalReproducciones(0) {}
+
+    void reproducirCancion(Cancion* cancion, const string& rutaPortada, const string& artistaNombre) {
+        usuarioBase.reproducirCancionBase(cancion, rutaPortada, artistaNombre);
+
+        cout << "Ruta al archivo de audio: " << cancion->getRutaAudio128() << endl;
+        cout << "Calidad: 128 kbps" << endl;
+
+        contadorCanciones++;
+        if (contadorCanciones % 2 == 0) {
+            cout << "\n--- PUBLICIDAD ---" << endl;
+            cout << "Mensaje publicitario: ¡Escucha más música sin interrupciones con Premium!" << endl;
+            cout << "Categoría del mensaje: B" << endl;
+            cout << "--- FIN PUBLICIDAD ---\n" << endl;
+        }
+
+        totalReproducciones++;
+        cout << "Reproducción completada!" << endl;
+    }
+
+    void mostrarOpcionesReproduccion() const {
+        usuarioBase.mostrarOpcionesBase();
+        cout << "3.- Siguiente canción" << endl;
+        cout << "NOTA: Usuarios estándar no pueden volver a canciones anteriores" << endl;
+    }
+
+    string getNickname() const { return usuarioBase.getNickname(); }
+    string getTipo() const { return usuarioBase.getTipo(); }
+    string getCiudad() const { return usuarioBase.getCiudad(); }
+    string getPais() const { return usuarioBase.getPais(); }
+    string getFechaInscripcion() const { return usuarioBase.getFechaInscripcion(); }
+    int getNumHistorial() const { return usuarioBase.getNumHistorial(); }
+    Cancion* getCancionHistorial(int indice) const { return usuarioBase.getCancionHistorial(indice); }
+
+    int getTotalReproducciones() const { return totalReproducciones; }
+    int getContadorPublicidad() const { return contadorCanciones / 2; }
+
+    void mostrarInfo() const {
+        usuarioBase.mostrarInfo();
+        cout << "Total reproducciones: " << totalReproducciones << endl;
+        cout << "Publicidades mostradas: " << getContadorPublicidad() << endl;
+        cout << "Calidad de audio: 128 kbps" << endl;
+        usuarioBase.mostrarHistorial();
+    }
+
+    bool operator==(const UsuarioEstandar& otro) const {
+        return this->usuarioBase == otro.usuarioBase;
+    }
+
+    void mostrarResumen() const {
+        cout << "Usuario: " << getNickname() << " (" << getTipo() << ")";
+    }
+};
+
 int main() {
-    cout << "=== PRUEBA DE TODAS LAS CLACES EN CONJUNTO ===" << endl;
+    cout << "=== PRUEBA CLASE USUARIO ESTÁNDAR ===" << endl;
 
-    Artista* artista = new Artista("12345", "Artista de Prueba", 25, "Colombia");
-    artista->setSeguidores(15000);
-    artista->setPosicionTendencias(5);
+    Artista* artista = new Artista("12345", "Artista Prueba", 25, "Colombia");
+    Album* album = new Album("01", "Álbum Prueba", "2024-01-15", "Sello", "portada.png");
 
-    Album* album1 = new Album("01", "Primer Álbum", "2023-05-20",
-                              "Sello A", "/ruta/portada1.png");
-    album1->agregarGenero("Pop");
-    album1->agregarGenero("Electrónica");
+    Cancion* cancion1 = new Cancion("123450101", "Canción Uno", 184, "cancion1");
+    Cancion* cancion2 = new Cancion("123450102", "Canción Dos", 217, "cancion2");
 
+    album->agregarCancion(cancion1);
+    album->agregarCancion(cancion2);
+    artista->agregarAlbum(album);
 
-    Cancion* cancion1 = new Cancion("123450101", "Éxito Uno", 184, "/ruta/base/cancion1");
-    cancion1->agregarCredito("Juan", "Pérez", "PROD123456", "Productor");
-    album1->agregarCancion(cancion1);
+    UsuarioEstandar* usuario = new UsuarioEstandar("usuario_test", "Medellín", "Colombia", "2024-01-01");
 
-    Cancion* cancion2 = new Cancion("123450102", "Canción Dos", 217, "/ruta/base/cancion2");
-    cancion2->agregarCredito("María", "Gómez", "MUSI789012", "Músico");
-    album1->agregarCancion(cancion2);
+    cout << "=== INFORMACIÓN DEL USUARIO ===" << endl;
+    usuario->mostrarInfo();
 
-    Album* album2 = new Album("02", "Segundo Álbum", "2024-01-15",
-                              "Sello B", "/ruta/portada2.png");
-    album2->agregarGenero("Rock");
+    cout << "\n=== REPRODUCCIONES ===" << endl;
+    usuario->reproducirCancion(cancion1, "portada1.png", "Artista Prueba");
+    usuario->reproducirCancion(cancion2, "portada2.png", "Artista Prueba");
 
-    Cancion* cancion3 = new Cancion("123450201", "Rock Song", 195, "/ruta/base/cancion3");
-    cancion3->agregarCredito("Carlos", "López", "COMP345678", "Compositor");
-    album2->agregarCancion(cancion3);
+    cout << "\n=== INFORMACIÓN FINAL ===" << endl;
+    usuario->mostrarInfo();
 
-    artista->agregarAlbum(album1);
-    artista->agregarAlbum(album2);
+    cout << "\n=== RESUMEN ===" << endl;
+    usuario->mostrarResumen();
+    cout << endl;
 
-    artista->mostrarInfo();
-
-    cout << "\n=== BUSCANDO ÁLBUM ===" << endl;
-    Album* albumEncontrado = artista->buscarAlbumPorId("01");
-    if (albumEncontrado) {
-        cout << "Álbum encontrado: " << albumEncontrado->getNombre() << endl;
-    }
-
-    cout << "\n=== BUSCANDO CANCIÓN EN TODOS LOS ÁLBUMES ===" << endl;
-    Cancion* cancionEncontrada = artista->buscarCancionEnAlbumes("123450102");
-    if (cancionEncontrada) {
-        cout << "Canción encontrada: " << cancionEncontrada->getNombre() << endl;
-    }
-
-    cout << "\n=== TODAS LAS CANCIONES DEL ARTISTA ===" << endl;
-    int totalCanciones;
-    Cancion** todasCanciones = artista->obtenerTodasLasCanciones(totalCanciones);
-    cout << "Total de canciones: " << totalCanciones << endl;
-    for (int i = 0; i < totalCanciones; i++) {
-        cout << "  " << (i + 1) << ". " << todasCanciones[i]->getNombre() << endl;
-    }
-    delete[] todasCanciones;
-
-    cout << "\n=== SIMULANDO REPRODUCCIONES ===" << endl;
-    cancion1->incrementarReproducciones();
-    cancion1->incrementarReproducciones();
-    cancion3->incrementarReproducciones();
-    cout << "Total reproducciones del artista: " << artista->getTotalReproducciones() << endl;
-
-    cout << "\n=== DISCROGRAFÍA COMPLETA ===" << endl;
-    artista->mostrarDiscografiaCompleta();
-
-    cout << "\n=== SOBRECARGA DE OPERADORES ===" << endl;
-    Artista* artista2 = new Artista("67890", "Otro Artista", 30, "México");
-    artista2->setSeguidores(8000);
-
-    if (*artista < *artista2) {
-        cout << artista->getNombre() << " tiene MENOS seguidores" << endl;
+    UsuarioEstandar* usuario2 = new UsuarioEstandar("otro_usuario", "Bogotá", "Colombia", "2024-02-01");
+    cout << "\n=== COMPARACIÓN ===" << endl;
+    if (*usuario == *usuario2) {
+        cout << "Son el mismo usuario" << endl;
     } else {
-        cout << artista->getNombre() << " tiene MÁS seguidores" << endl;
+        cout << "Son usuarios diferentes" << endl;
     }
 
+    delete usuario;
+    delete usuario2;
     delete artista;
-    delete artista2;
 
     cout << "\n=== PRUEBA COMPLETADA ===" << endl;
     return 0;
